@@ -283,16 +283,16 @@ args$max_features <- ifelse(
   args$max_features, 
   as.numeric(as.character(args$max_features))
   )
-args$pK <- ifelse(
-  toupper(args$pK) == "NULL", 
-  NULL, 
-  as.numeric(as.character(args$pK))
-  )
-args$retain <- ifelse(
-  toupper(args$retain) == "NULL",
-  NULL,
-  as.numeric(as.character(args$retain))
-  )
+# args$pK <- ifelse(
+#   toupper(args$pK) == "NULL", 
+#   NULL, 
+#   as.numeric(as.character(args$pK))
+#   )
+# args$retain <- ifelse(
+#   toupper(args$retain) == "NULL",
+#   NULL,
+#   as.numeric(as.character(args$retain))
+#   )
 args$find_singlets <- as.logical(args$find_singlets)
 args$factor_vars <- strsplit(args$factor_vars, ",")[[1]]
 args$vars_to_regress_out <- strsplit(args$vars_to_regress_out, ",")[[1]]
