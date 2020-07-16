@@ -77,9 +77,9 @@ celltype <- attr(res, "de_params")["celltype"]
 de_method <- attr(res, "de_params")["de_method"]
 pseudobulk <- attr(res, "de_params")["pseudobulk"]
 
-if (pseudobulk) {
+if (pseudobulk == "Yes") {
   pb_str <- "_pb"
-} else {
+} else if (pseudobulk == "No"){
   pb_str <- ""
 }
 

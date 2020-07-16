@@ -658,6 +658,8 @@ process scflow_perform_ipa {
     """
     scflow_ipa.r \
     --gene_file ${de_table.join(',')} \
+    --fc_threshold ${params.IPA.fc_threshold} \
+    --pval_cutoff ${params.IPA.pval_cutoff} \
     --reference_file ${params.IPA.reference_file} \
     --enrichment_tool ${params.IPA.enrichment_tool.join(',')} \
     --enrichment_method ${params.IPA.enrichment_method} \

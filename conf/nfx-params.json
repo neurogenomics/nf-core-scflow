@@ -169,11 +169,16 @@
       "sex", "age", "seqdate"
     ],
     "random_effects_var": "null",
-    "fc_threshold": 1.1,
-    "pval_cutoff": 0.05,
     "force_run": false
   },
+  "reportde": {
+    "fc_threshold": 1.1,
+    "pval_cutoff": 0.05,
+    "n_label": 10
+  },
    "IPA": {
+    "fc_threshold": 1.1,
+    "pval_cutoff": 0.05,
     "reference_file": "null",
     "enrichment_tool": [
       "WebGestaltR"

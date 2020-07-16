@@ -12,6 +12,7 @@ options(mc.cores = parallel::detectCores())
 library(argparse)
 library(scFlow)
 library(cli)
+library(dplyr)
 
 ##  ............................................................................
 ##  Parse command-line arguments                                            ####
@@ -29,6 +30,22 @@ required$add_argument(
   metavar = ".tsv",
   required = TRUE,
   default = "NULL"
+)
+
+required$add_argument(
+  "--fc_threshold",
+  type = "double",
+  default = 1.1,
+  metavar = "number",
+  help = "Absolute fold-change cutoff for DE [default %(default)s]"
+)
+
+required$add_argument(
+  "--pval_cutoff",
+  type = "double",
+  default = 0.05,
+  metavar = "number",
+  help = "adjusted p-value cutoff for DE report [default %(default)s]"
 )
 
 required$add_argument(
@@ -112,6 +129,13 @@ output_dir <- file.path(args$output_dir, "ipa")
 dir.create(output_dir)
 
 for (gene_file in args$gene_file) {
+  
+#subset the gene_file according to the thresholds
+  gene_file <- gene_file %>%
+    dplyr::filter(!is.na(padj)) %>%
+    dplyr::filter(!is.nan(logFC)) %>%
+    dplyr::filter(padj <= args$pval_cutoff, abs(logFC) >= log2(args$fc_threshold))
+    
 
   enrichment_result <- find_impacted_pathways(
     gene_file = gene_file,
