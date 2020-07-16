@@ -587,9 +587,7 @@ process scflow_perform_de {
 
   output:
     path 'de_table/*.tsv', emit: de_table, optional: true
-    path 'de_report/*.html', emit: de_report
-    path 'de_plot/*.png', emit: de_plot
-    path 'de_plot_data/*.tsv', emit: de_plot_data
+    path 'de_table_qs/*.qs', emit: de_table_qs
 
   script:
     celltype = ct_tuple[0]
@@ -614,11 +612,34 @@ process scflow_perform_de {
     --ref_class ${params.de.ref_class} \
     --confounding_vars ${params.de.confounding_vars.join(',')} \
     --random_effects_var ${params.de.random_effects_var} \
-    --fc_threshold ${params.de.fc_threshold} \
     --ensembl_mappings ${params.ensembl_mappings} 
      
     """
 }
+
+process scflow_report_de {
+
+  label 'process_low'
+   
+  input:
+    path( de_table_qs )
+
+  output:
+    path 'de_report/*.html', emit: de_report
+    path 'de_plot/*.png', emit: de_plot
+    path 'de_plot_data/*.tsv', emit: de_plot_data
+
+  script:
+
+    """
+    scflow_report_de.r \
+    --de_table ${de_table_qs} \
+    --fc_threshold ${params.reportde.fc_threshold} \
+    --pval_cutoff ${params.reportde.pval_cutoff} \
+    --n_label ${params.reportde.n_label}
+    """
+}
+
 
 process scflow_perform_ipa {
 
@@ -708,6 +729,9 @@ workflow {
     scflow_finalize ( scflow_map_celltypes.out.celltype_mapped_sce, ch_celltype_mappings )
     // 
     scflow_perform_de( scflow_finalize.out.final_sce, params.de.de_method, scflow_finalize.out.celltypes.splitCsv(header:['celltype', 'n_cells'], skip: 1, sep: '\t').map {row -> tuple(row.celltype, row.n_cells) } )
+    //
+    scflow_report_de( scflow_perform_de.out.de_table_qs )
+    //
     scflow_perform_ipa( scflow_perform_de.out.de_table )
     //
     scflow_traject( scflow_finalize.out.final_sce )
@@ -739,9 +763,10 @@ workflow {
     scflow_finalize.out.celltype_metrics_report to: "$params.outdir/Reports/", mode: 'copy', overwrite: 'true'
     // DE
     scflow_perform_de.out.de_table to: "$params.outdir/Tables/DGE", mode: 'copy', optional: true, overwrite: 'true'
-    scflow_perform_de.out.de_report to: "$params.outdir/Reports/", mode: 'copy', overwrite: 'true'
-    scflow_perform_de.out.de_plot to: "$params.outdir/Plots/DGE/", mode: 'copy', overwrite: 'true'
-    scflow_perform_de.out.de_plot_data to: "$params.outdir/Tables/DGE", mode: 'copy', overwrite: 'true'
+    // DE report
+    scflow_report_de.out.de_report to: "$params.outdir/Reports/", mode: 'copy', overwrite: 'true'
+    scflow_report_de.out.de_plot to: "$params.outdir/Plots/DGE/", mode: 'copy', overwrite: 'true'
+    scflow_report_de.out.de_plot_data to: "$params.outdir/Tables/DGE", mode: 'copy', overwrite: 'true'
     // IPA
     scflow_perform_ipa.out.ipa_results to: "$params.outdir/Tables/", mode: 'copy', optional: true, overwrite: 'true'
     scflow_perform_ipa.out.ipa_report to: "$params.outdir/Reports/", mode: 'copy', optional: true, overwrite: 'true'

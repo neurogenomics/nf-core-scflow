@@ -132,22 +132,6 @@ required$add_argument(
 )
 
 required$add_argument(
-  "--fc_threshold",
-  type = "double",
-  default = 1.1,
-  metavar = "number",
-  help = "Absolute fold-change cutoff for DE [default %(default)s]"
-)
-
-required$add_argument(
-  "--pval_cutoff",
-  type = "double",
-  default = 0.05,
-  metavar = "number",
-  help = "p-value cutoff for DE [default %(default)s]"
-)
-
-required$add_argument(
   "--ensembl_mappings",
   help = "path to ensembl mappings file",
   metavar = "tsv",
@@ -198,8 +182,6 @@ de_results <- perform_de(
   ref_class = args$ref_class,
   confounding_vars = args$confounding_vars,
   random_effects_var = args$random_effects_var,
-  fc_threshold = args$fc_threshold,
-  pval_cutoff = args$pval_cutoff,
   mast_method = args$mast_method,
   force_run = args$force_run,
   ensembl_mapping_file = args$ensembl_mappings
@@ -207,9 +189,7 @@ de_results <- perform_de(
 
 new_dirs <- c(
   "de_table",
-  "de_report",
-  "de_plot",
-  "de_plot_data")
+  "de_table_qs")
 
 #make dirs
 purrr::walk(new_dirs, ~ dir.create(file.path(getwd(), .)))
@@ -223,24 +203,11 @@ for (result in names(de_results)) {
                 file = file.path(getwd(), "de_table",
                                  paste0(file_name, result, "_DE.tsv")),
                 quote = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE)
-
-    report_de(de_results[[result]],
-      report_folder_path = file.path(getwd(), "de_report"),
-      report_file = paste0(file_name, result, "_scflow_de_report"))
-
-    png(file.path(getwd(), "de_plot",
-                  paste0(file_name, result, "_volcano_plot.png")),
-        width = 247, height = 170, units = "mm", res = 600)
-    print(attr(de_results[[result]], "plot"))
-    dev.off()
-
-    p <- attr(de_results[[result]], "plot")
-    plot_data <- p$data
-    write.table(p$data,
-                file = file.path(getwd(), "de_plot_data",
-                                 paste0(file_name, result, ".tsv")),
-                quote = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE)
-
+    
+    
+    qs::qsave(de_results[[result]],
+              file = file.path(getwd(), "de_table_qs",
+                               paste0(file_name, result, "_DE.qs")))
   } else {
     print(sprintf("No DE genes found for %s", result))
   }
