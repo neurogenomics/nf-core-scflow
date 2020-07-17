@@ -12,6 +12,7 @@ options(mc.cores = future::availableCores())
 library(argparse)
 library(scFlow)
 library(cli)
+library(dplyr)
 
 ##  ............................................................................
 ##  Parse command-line arguments                                            ####
@@ -58,8 +59,16 @@ required$add_argument(
 #   _____________________________________________________________________
 
 #Reading the de_table output from process scflow_perform_de
+args <- parser$parse_args()
 
 res <- qs::qread(args$de_table)
+
+total_de <- res %>%
+  filter(padj <= args$pval_cutoff, abs(logFC) >= log2(args$fc_threshold)) %>%
+  pull(gene) %>%
+  length()
+
+if (total_de > 0) {
 
 #make output dirs
 
@@ -86,7 +95,7 @@ if (pseudobulk == "Yes") {
 file_name <- paste0(celltype, "_",
                     de_method, pb_str, "_")
 
-result <- pseudobulk <- attr(res, "de_params")["contrast_name"]
+result <- attr(res, "de_params")["contrast_name"]
 
 #Generating the report
 report_de(res = res,
@@ -119,4 +128,7 @@ write.table(p$data,
             quote = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE)
 
 
-
+} else {
+  result <- attr(res, "de_params")["contrast_name"]
+  print(sprintf("No DE genes found for %s", result))
+}
