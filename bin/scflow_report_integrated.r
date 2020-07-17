@@ -33,43 +33,16 @@ required$add_argument(
 )
 
 required$add_argument(
-  "--cluster_method",
-  help = "method to use for clustering",
-  metavar = "louvain", 
+  "--categorical_covariates",
+  help = "-categorical covariates",
+  metavar = "individual,diagnosis,region,sex",
   required = TRUE
 )
 
 required$add_argument(
-  "--reduction_method",
-  help = "reduced dimension embedding to use for clustering",
+  "--input_reduced_dim",
+  help = "reduced dimension embedding to use for the integration report",
   metavar = "UMAP", 
-  required = TRUE
-)
-
-required$add_argument(
-  "--res",
-  type = "double", 
-  default = 0.00001,
-  help = "clustering resolution",
-  metavar = "N", 
-  required = TRUE
-)
-
-required$add_argument(
-  "--k",
-  type = "integer", 
-  default = 100,
-  help = "the number of kNN",
-  metavar = "N", 
-  required = TRUE
-)
-
-required$add_argument(
-  "--louvain_iter",
-  type = "integer", 
-  default = 1,
-  help = "number of iterations used for Louvain clustering",
-  metavar = "N", 
   required = TRUE
 )
 
@@ -77,30 +50,29 @@ required$add_argument(
 ### Pre-process args                                                        ####
 
 args <- parser$parse_args()
+args$categorical_covariates <- strsplit(args$categorical_covariates, ",")[[1]]
 
 ##  ............................................................................
 ##  Start                                                                   ####
 
 sce <- read_sce(args$sce_path, read_metadata = TRUE)
 
-sce <- cluster_sce(
+sce <- annotate_integrated_sce(
     sce,
-    cluster_method = args$cluster_method,
-    reduction_method = args$reduction_method,
-    res = args$res,
-    k = args$k,
-    louvain_iter = args$louvain_iter
-    )
+    categorical_covariates = args$categorical_covariates,
+    input_reduced_dim = args$input_reduced_dim
+)
 
 ##  ............................................................................
 ##  Save Outputs                                                            ####
 
-# Save SingleCellExperiment
-write_sce(
+dir.create(file.path(getwd(), "integration_report"))
+
+report_integrated_sce(
   sce = sce,
-  folder_path = file.path(getwd(), "clustered_sce"),
-  write_metadata = TRUE
-  )
+  report_folder_path = file.path(getwd(), "integration_report"),
+  report_file = "integrate_report_scflow"
+)
 
 ##  ............................................................................
 ##  Clean up                                                                ####

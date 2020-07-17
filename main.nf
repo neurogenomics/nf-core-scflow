@@ -299,7 +299,8 @@ process scflow_qc {
     --lower ${params.findcells.lower} \
     --retain ${params.findcells.retain} \
     --alpha_cutoff ${params.findcells.alpha_cutoff} \
-    --niters ${params.findcells.niters}
+    --niters ${params.findcells.niters} \
+    --expect_cells ${params.findcells.expect_cells}
      
     """
 }
@@ -357,7 +358,7 @@ process scflow_merge {
 process scflow_integrate {
 
   tag "merged"
-  label 'process_medium'
+  label 'process_high'
 
   input:
     path( sce )
@@ -405,7 +406,7 @@ process scflow_integrate {
 process scflow_reduce_dims {
   
   tag "merged"
-  label 'process_medium'
+  label 'process_high'
 
   input:
     path( sce )
@@ -465,7 +466,6 @@ process scflow_cluster {
 
   output:
     path 'clustered_sce/', emit: clustered_sce
-    path 'integration_report/', emit: integration_report
 
   script:
     """
@@ -476,7 +476,28 @@ process scflow_cluster {
     --reduction_method ${params.cluster.reduction_method} \
     --res ${params.cluster.res} \
     --k ${params.cluster.k} \
-    --louvain_iter ${params.cluster.louvain_iter}  \
+    --louvain_iter ${params.cluster.louvain_iter}
+
+    """
+
+}
+
+process scflow_report_integrated {
+  
+  tag "merged"
+  label 'process_medium'
+
+  input:
+    path( sce )
+
+  output:
+    path 'integration_report/', emit: integration_report
+
+  script:
+    """
+
+    scflow_report_integrated.r \
+    --sce_path ${sce} \
     --categorical_covariates ${params.integration_report.categorical_covariates.join(',')} \
     --input_reduced_dim ${params.integration_report.input_reduced_dim}
 
@@ -554,7 +575,7 @@ process scflow_finalize {
 
 process scflow_plot_reddim_genes {
 
-  label 'process_low'
+  label 'process_medium'
    
   input:
     path( sce )
@@ -704,6 +725,7 @@ workflow {
 	  scflow_integrate ( scflow_merge.out.merged_sce )
     scflow_reduce_dims ( scflow_integrate.out.integrated_sce )
     scflow_cluster ( scflow_reduce_dims.out.reddim_sce )
+    scflow_report_integrated ( scflow_cluster.out.clustered_sce )
     scflow_map_celltypes ( scflow_cluster.out.clustered_sce, ch_ctd_folder )
     scflow_finalize ( scflow_map_celltypes.out.celltype_mapped_sce, ch_celltype_mappings )
     // 
@@ -730,7 +752,7 @@ workflow {
     scflow_merge.out.merge_plots to: "$params.outdir/Plots/Merged/", mode: 'copy', overwrite: 'true'
     scflow_merge.out.merge_summary_plots to: "$params.outdir/Plots/Merged/", mode: 'copy', overwrite: 'true'
     // cluster
-    scflow_cluster.out.integration_report to: "$params.outdir/Reports/", mode: 'copy', overwrite: 'true'
+    scflow_report_integrated.out.integration_report to: "$params.outdir/Reports/", mode: 'copy', overwrite: 'true'
     // ct
     scflow_map_celltypes.out.celltype_mappings to: "$params.outdir/Tables/Celltype_Mappings", mode: 'copy', overwrite: 'true'
     // final
