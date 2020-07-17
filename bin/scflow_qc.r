@@ -244,10 +244,8 @@ required$add_argument(
 
 required$add_argument(
   "--retain",
-  type = "integer", 
-  default = 300,
   help = "UMI count above which all barcodes are assumed to contain cells",
-  metavar = "N", 
+  default = "NULL",
   required = TRUE
 )
 
@@ -269,6 +267,15 @@ required$add_argument(
   required = TRUE
 )
 
+required$add_argument(
+  "--expect_cells",
+  type = "integer", 
+  help = "number of expected cells for emptydrops automated retain estimate",
+  default = 3000,
+  metavar = "N",
+  required = TRUE
+)
+
 ### . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ..
 ### Pre-process args                                                        ####
 
@@ -285,11 +292,18 @@ args$max_features <- ifelse(
   args$max_features, 
   as.numeric(as.character(args$max_features))
   )
-args$pK <- ifelse(
-  toupper(args$pK) == "NULL", 
-  NULL, 
+args$pK <- if(toupper(args$pK) == "NULL") NULL else { 
   as.numeric(as.character(args$pK))
-  )
+}
+
+if(toupper(args$retain) == "NULL") {
+  args$retain <- NULL
+} else if(toupper(args$retain) == "AUTO") {
+   args$retain <- "auto"
+ } else {
+  args$retain <- as.numeric(as.character(args$retain))
+}
+
 args$find_singlets <- as.logical(args$find_singlets)
 args$factor_vars <- strsplit(args$factor_vars, ",")[[1]]
 args$vars_to_regress_out <- strsplit(args$vars_to_regress_out, ",")[[1]]
